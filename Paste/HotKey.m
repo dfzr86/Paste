@@ -7,11 +7,61 @@
 
 #import "HotKey.h"
 #import <Carbon/Carbon.h>
+#import <AppKit/AppKit.h>
+#import <Cocoa/Cocoa.h>
+
 
 @implementation HotKey
 
 + (void)addGlobalHotKey:(UInt32)keyCode {
     [self addGlobalHotKey:keyCode onlyCmd:NO];
+}
+
++ (void)injectPaste {
+    CGEventRef cmd_down = CGEventCreateKeyboardEvent(NULL, kVK_Command, true);
+     CGEventPost(kCGHIDEventTap, cmd_down);
+     CGEventRef v_down = CGEventCreateKeyboardEvent(NULL, kVK_ANSI_V, true);
+     CGEventPost(kCGHIDEventTap, v_down);
+     CGEventRef v_up = CGEventCreateKeyboardEvent(NULL, kVK_ANSI_V, false);
+     CGEventPost(kCGHIDEventTap, v_up);
+     CGEventRef cmd_up = CGEventCreateKeyboardEvent(NULL, kVK_Command, false);
+     CGEventPost(kCGHIDEventTap, cmd_up);
+
+     CFRelease(cmd_down);
+     CFRelease(v_down);
+     CFRelease(v_up);
+     CFRelease(cmd_up);
+    
+    
+    //    CGEventRef ref = CGEventCreateKeyboardEvent(NULL, cmdKey + kVK_ANSI_V, false);
+    
+//    CGEventRef event1, event2, event3, event4;
+//    event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)cmdKey, true);
+//    event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)kVK_ANSI_V, true);
+//    event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)cmdKey, false);
+//    event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)kVK_ANSI_V, false);
+    
+//    CGEventPost(kCGHIDEventTap, event1);
+//    CGEventPost(kCGHIDEventTap, event2);
+//    CGEventPost(kCGHIDEventTap, event3);
+//    CGEventPost(kCGHIDEventTap, event4);
+    
+    
+    //
+    //    CGEventRef cmd_down = CGEventCreateKeyboardEvent(NULL, kVK_Command, true);
+    //     CGEventPost(kCGHIDEventTap, cmd_down);
+    //     CGEventRef v_down = CGEventCreateKeyboardEvent(NULL, kVK_ANSI_V, true);
+    //     CGEventPost(kCGHIDEventTap, v_down);
+    //     CGEventRef v_up = CGEventCreateKeyboardEvent(NULL, kVK_ANSI_V, false);
+    //     CGEventPost(kCGHIDEventTap, v_up);
+    //     CGEventRef cmd_up = CGEventCreateKeyboardEvent(NULL, kVK_Command, false);
+    //     CGEventPost(kCGHIDEventTap, cmd_up);
+    //
+    //     CFRelease(cmd_down);
+    //     CFRelease(v_down);
+    //     CFRelease(v_up);
+    //     CFRelease(cmd_up);
+    
 }
 
 + (void)addGlobalHotKey:(UInt32)keyCode onlyCmd:(BOOL)onlyCmd {

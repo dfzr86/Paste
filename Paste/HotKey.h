@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface HotKey : NSObject
 
 + (void)addGlobalHotKey:(UInt32)keyCode;
++ (void)injectPaste;
 
 @end
 

@@ -9,7 +9,17 @@ import Cocoa
 import Carbon
 import AppKit
 
+class PastTextView: NSTextView {
+    var mouseDownBlock: ((String) -> Void)?
+    
+    override func mouseDown(with event: NSEvent) {
+        self.mouseDownBlock?(string)
+    }
+}
+
 class PastHistoryView: NSScrollView {
+    var mouseDownBlock: ((String) -> Void)?
+    
     let itemWidth: CGFloat = 240
     let gap: CGFloat = 20
     let maxSaveCount: Int = 7
@@ -59,7 +69,11 @@ class PastHistoryView: NSScrollView {
     
     func insert(str: String?) {
         guard let str = str else { return }
-        let label = NSTextView()
+        let label = PastTextView()
+        label.mouseDownBlock = { [weak self] text in
+            self?.mouseDownBlock?(text)
+        }
+//        label.isEditable = false
         label.string = str
         label.font = NSFont.systemFont(ofSize: 24)
         stackView.insertArrangedSubview(label, at: 0)
@@ -99,7 +113,29 @@ class ViewController: NSViewController {
     var item: NSStatusItem?
     
     let pastWindow = NSWindow()
-    let pastView = PastHistoryView(frame: .zero)
+    lazy var pastView: PastHistoryView = {
+        let v = PastHistoryView(frame: .zero)
+        v.mouseDownBlock = { [weak self] text in
+            guard let self = self else { return }
+            self.hide()
+            self.insertSomething(str: text)
+//            self.perform(#selector(self.insertSomething(str: )), with: text, afterDelay: 1)
+        }
+        return v 
+    }()
+    
+    @objc func insertSomething(str: String) {
+        let pastBoard = NSPasteboard.general
+        pastBoard.declareTypes([.string], owner: nil)
+        pastBoard.setString(str, forType: .string)
+        
+//        HotKey.injectPaste()
+
+        
+//        if let app = NSWorkspace.shared.runningApplications.filter({ $0.isActive }).first {
+//        }
+    }
+
     
     let runningApp = NSRunningApplication.current
     
@@ -107,7 +143,6 @@ class ViewController: NSViewController {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item?.button?.image = NSImage(named: "icon")
     }
-    
     private func addClickNoti() {
         HotKey.addGlobalHotKey(UInt32(kVK_ANSI_V))
         NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "cmd_shift_v_clicked"), object: nil, queue: .main) { [weak self] noti in
