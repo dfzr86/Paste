@@ -107,7 +107,6 @@ class PastHistoryView: NSScrollView {
     }
 }
 
-
 class ViewController: NSViewController {
     
     var item: NSStatusItem?
@@ -121,7 +120,7 @@ class ViewController: NSViewController {
             self.insertSomething(str: text)
 //            self.perform(#selector(self.insertSomething(str: )), with: text, afterDelay: 1)
         }
-        return v 
+        return v
     }()
     
     @objc func insertSomething(str: String) {
