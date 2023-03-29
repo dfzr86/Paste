@@ -8,6 +8,8 @@
 import Cocoa
 import Carbon
 import AppKit
+import Foundation
+
 
 class PastTextView: NSTextView {
     var mouseDownBlock: ((String) -> Void)?
@@ -17,12 +19,12 @@ class PastTextView: NSTextView {
     }
 }
 
-class PastHistoryView: NSScrollView {
+class PastHistoryView: NSScrollView, NSTextViewDelegate {
     var mouseDownBlock: ((String) -> Void)?
     
     let itemWidth: CGFloat = 240
     let gap: CGFloat = 20
-    let maxSaveCount: Int = 7
+    let maxSaveCount: Int = 50
     
     var prevPastBoardChangeCount: Int = 0
     
@@ -44,7 +46,7 @@ class PastHistoryView: NSScrollView {
     
     @objc func checkPastBoard() {
         let currentPastBoardCount = NSPasteboard.general.changeCount
-        print("pastBoardCount: \(currentPastBoardCount)")
+//        print("pastBoardCount: \(currentPastBoardCount)")
         
         guard currentPastBoardCount > prevPastBoardChangeCount,
               let string = NSPasteboard.general.string(forType: .string),
@@ -73,7 +75,8 @@ class PastHistoryView: NSScrollView {
         label.mouseDownBlock = { [weak self] text in
             self?.mouseDownBlock?(text)
         }
-//        label.isEditable = false
+        label.delegate = self
+        label.isEditable = false
         label.string = str
         label.font = NSFont.systemFont(ofSize: 24)
         stackView.insertArrangedSubview(label, at: 0)
@@ -105,9 +108,17 @@ class PastHistoryView: NSScrollView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
 }
 
-class ViewController: NSViewController {
+
+public func dispatch_after_delay(_ delay: TimeInterval, queue: DispatchQueue, block: @escaping () -> Void) {
+    let time = DispatchTime.now() + Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC)
+    queue.asyncAfter(deadline: time, execute: block)
+}
+
+
+class ViewController: NSViewController, NSTextViewDelegate {
     
     var item: NSStatusItem?
     
@@ -118,7 +129,7 @@ class ViewController: NSViewController {
             guard let self = self else { return }
             self.hide()
             self.insertSomething(str: text)
-//            self.perform(#selector(self.insertSomething(str: )), with: text, afterDelay: 1)
+            
         }
         return v
     }()
@@ -128,13 +139,28 @@ class ViewController: NSViewController {
         pastBoard.declareTypes([.string], owner: nil)
         pastBoard.setString(str, forType: .string)
         
-//        HotKey.injectPaste()
-
+        let script = """
+        tell application "System Events"
+            keystroke "v" using {command down}
+        end tell
+        """
+        var error: NSDictionary?
+        let appleScript = NSAppleScript(source: script)
         
-//        if let app = NSWorkspace.shared.runningApplications.filter({ $0.isActive }).first {
-//        }
+        DispatchQueue.global().async {
+            let result = appleScript?.executeAndReturnError(&error)
+            if let error = error {
+                print("Error: \(error)")
+            }
+            if let result = result?.stringValue {
+                print("Result: \(result)")
+            }
+        }
     }
-
+    
+    func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        return true
+    }
     
     let runningApp = NSRunningApplication.current
     
@@ -174,8 +200,10 @@ class ViewController: NSViewController {
         let button = NSButton(title: "Show/Hide", target: self, action: #selector(show))
         view.addSubview(button)
         setWindowFull(pastWindow)
-        
-        view.setFrameSize(.zero)
+        //
+        let input = NSTextView(frame: .init(x: 0, y: 0, width: 400, height: 88))
+        input.delegate = self
+        view.addSubview(input)
     }
     
     @objc func show() {
